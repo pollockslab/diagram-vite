@@ -5,5 +5,11 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'docs',
+    sourcemap: false, // .map 파일생성 안하기(배포용)
+    minify: 'esbuild',
   },
+  server: {
+    port: 5173,
+    open: true,
+  }
 })
