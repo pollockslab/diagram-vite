@@ -3,7 +3,7 @@
  */
 export class _MAIN 
 {
-    constructor()
+    constructor(args={})
     {
         console.log("menu 실행")
     }
