@@ -5,6 +5,6 @@ export class _MAIN
 {
     constructor(args={})
     {
-        console.log("win 실행")
+        // console.log("win 실행")
     }
 }

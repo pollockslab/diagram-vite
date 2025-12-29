@@ -6,7 +6,10 @@ export class _MAIN
     constructor(args={})
     {
         this.type = "none";
-        this._axis = {x: 0, y: 0, width: 100, height: 100};
+        this.x = 0;
+        this.y = 0;
+        this.w = 0;
+        this.h = 0;
         
         // 캡처용 캔버스
         const cav = document.createElement("canvas");
@@ -15,56 +18,13 @@ export class _MAIN
         
         // 자식 도형 저장공간
         this._children = [];
-        
     }
 
-    get x()
+    SetData(args={})
     {
-        return Math.round(this._axis.x);
-    }
-    set x(x)
-    {
-        this._axis.x = Math.round(x);
+        Object.entries(args).forEach(([key, value]) => {
+            this[key] = value;
+        });
     }
 
-    get y()
-    {
-        return Math.round(this._axis.y);
-    }
-    set y(y)
-    {
-        this._axis.y = Math.round(y);
-    }
-
-    get width()
-    {
-        return this._axis.width;
-    }
-    set width(width)
-    {
-        this._axis.width = Math.round(width);
-    }
-    
-    get height()
-    {
-        return this._axis.height;
-    }
-    set height(height)
-    {
-        this._axis.height = Math.round(height);
-    }
-
-    get capture()
-    {
-        return this._capture.cav;
-    }
-    get capture()
-    {
-        return this._capture.ctx;
-    }
-
-    get children()
-    {
-        return this._children;
-    }
 }

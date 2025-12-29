@@ -1,3 +1,4 @@
+import { _DIAGRAM, _ENGINE, _CSS, _CU } from '../../imports.js'
 import { _VIEW } from '../../main.js'
 
 export class _MAIN
@@ -16,7 +17,7 @@ export class _MAIN
             else if(e.deltaY < 0) _VIEW.zoom -= 0.1;
             else return;
 
-            _VIEW.Draw();
+            _VIEW.isDragging = true;
         }, {passive: true});
         div.addEventListener('mousedown', (e) =>
         {
@@ -25,6 +26,13 @@ export class _MAIN
             this.down.offsetY = e.offsetY;
             this.down.xView = _VIEW.x;
             this.down.yView = _VIEW.y;
+
+            _VIEW.diagrams.push(new _DIAGRAM.point({
+                x:_VIEW.SpaceX(e.offsetX), y:_VIEW.SpaceY(e.offsetY), 
+                color: 'green', 
+                ctxDraw:_VIEW.layers.background.ctx,
+            }));
+            _VIEW.isDragging = true;
         });
         div.addEventListener('mousemove', (e) =>
         {
@@ -36,16 +44,14 @@ export class _MAIN
             _VIEW.x = this.down.xView - xRange;
             _VIEW.y = this.down.yView - yRange;
             
-            _VIEW.Draw();
+            _VIEW.isDragging = true;
         });
         div.addEventListener('mouseup', (e) =>
         {
-            if(!this.down) return;
             this.down = null;
         });
         div.addEventListener('mouseleave', (e) =>
         {
-            if(!this.down) return;
             this.down = null;
         });
     }

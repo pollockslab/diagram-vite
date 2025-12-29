@@ -5,6 +5,6 @@ export class _MAIN
 {
     constructor(args={})
     {
-        console.log("dir 실행")
+        // console.log("dir 실행")
     }
 }

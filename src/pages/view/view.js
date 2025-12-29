@@ -1,4 +1,4 @@
-import { _IMPORT } from '../../imports.js'
+import { _DIAGRAM, _ENGINE, _CSS, _CU } from '../../imports.js'
 import { _CTRL } from '../../main.js'
 // import './view.css'
 
@@ -12,25 +12,58 @@ export class _MAIN
         this.x = 0;
         this.y = 0;
         this.scope = {
-            dpr: 1, min: 1, max: 6, zoom: 2
+            dpr: 1, min: 1, max: 6, zoom: 2,
+            width: 0, height: 0
         };
+
         this.layers = {};
         this.InitLayers(args.parentNode);
 
-        this.cssRoot = {};
-        this.CaptureRootCSS();
 
         window.addEventListener('resize', (e) => { this.Resize(); });
         this.Resize();
 
-        // this.Loop();
+        this.diagrams = [];
+        this.LoadDiagrams();
+
+        this.Loop();
+
+        
+        /**
+         *  카피본으로 그리는 상황
+         *  다시 그리는 상황: 스크롤, 이동시
+         * 
+         *  [백그라운드]
+         *  1. 룰러: 마-캡처복사, 스-다시그리고 복사
+         *  2. 영점표시: 마-캡처복사, 스-캡처복사(원래 큰걸로 캡처)
+         * 
+         *  [보드]
+         *  1. 도형: 마, 스- 원본크기로 캡처복사
+         *  2. 선: 생각을 해봐야되는데
+         *  
+         *  [효과]
+         *  1. 도형 하이라이트: 마,스 - 원본크기로 캡처복사
+         */
     }
 
-    // Loop = () =>
-    // {
-    //     this.Resize();
-    //     requestAnimationFrame(this.Loop);
-    // }
+    Loop = () =>
+    {
+        if(this.isDataUpdate) {
+            this.DataUpdate();
+            this.isDataUpdate = false;
+        }
+        if(this.isLogUpdate) {
+            this.LogUpdate();
+            this.isLogUpdate = false;
+        }
+
+        if(this.isDragging || this.isResizing) {
+            this.Draw();
+            this.isDragging = false;
+            this.isResizing = false;
+        }
+        requestAnimationFrame(this.Loop);
+    }
 
     get zoom()
     {
@@ -43,13 +76,28 @@ export class _MAIN
         }
     }
 
+    LoadDiagrams()
+    {
+        this.diagrams = [];
+        const p1 = new _DIAGRAM.point({
+            x:100, y:100, 
+            ctxDraw:this.layers.background.ctx,
+        });
+        this.diagrams.push(p1);
+
+        this.diagrams.push(new _DIAGRAM.point({
+            x:0, y:0, color: 'red', 
+            ctxDraw:this.layers.background.ctx,
+        }));
+    }
+
     InitLayers(parentNode)
     {
         this.layers = {};
         ['background', 'board', 'effect'].forEach((value) =>
         {
             this.layers[value] = {};
-            this.layers[value].cav = new _IMPORT.engines.element({
+            this.layers[value].cav = new _ENGINE.element({
                 type: 'canvas',
                 parentNode: parentNode,
                 class: `window ${value}`
@@ -61,40 +109,29 @@ export class _MAIN
         });
     }
 
-    CaptureRootCSS()
-    {
-        const styles = getComputedStyle(document.documentElement);
-        this.cssRoot = {};
-        this.cssRoot.fontFamily = styles.getPropertyValue('font-family');
-        this.cssRoot.fontSize = parseFloat(styles.getPropertyValue('font-size'));
-        this.cssRoot.fontWeight = parseFloat(styles.getPropertyValue('font-weight'));
-        this.cssRoot.textHeight = Math.round(this.cssRoot.fontSize*1.3);
-    }
-
     Resize()
     {
-       
-        const dpr =  window.devicePixelRatio || 1;
-        this.scope.dpr = dpr;
+        this.scope.width = window.innerWidth;
+        this.scope.height = window.innerHeight;
 
         Object.values(this.layers).forEach(layer => 
         {
-            layer.cav.width = window.innerWidth * dpr;
-            layer.cav.height = window.innerHeight * dpr;
-            layer.ctx.setTransform(1, 0, 0, 1, 0, 0);
-            layer.ctx.scale(dpr, dpr);
+            _CU.SetCanvasDPR(layer.cav, layer.ctx, 
+                window.innerWidth, window.innerHeight);
+            // canvas 중심을 0점으로 적용
             layer.ctx.translate(window.innerWidth/2, window.innerHeight/2);
         });
-        this.Draw();
+
+        this.isResizing = true;
     }
 
     SpaceX(xPixel)
     {
-        return this.x + Math.round(xPixel*this.zoom);
+        return this.x + Math.round((xPixel-this.scope.width/2)*this.zoom);
     }
     SpaceY(yPixel)
     {
-        return this.y + Math.round(yPixel*this.zoom);
+        return this.y + Math.round((yPixel-this.scope.height/2)*this.zoom);
     }
     SpaceLine(pixel)
     {
@@ -124,19 +161,44 @@ export class _MAIN
         });
 
 
-        this.DrawBackground();
+        // this.DrawBackground();
         
         this.DrawLine(100, 200, 200, 100, 'orange');
         this.DrawLine(0, 0, 200, 100, 'orange');
         this.DrawLine(0, 0, 100, 200, 'orange');
 
-        this.DrawPoint(100, 200, 'green');
-        this.DrawPoint(0, 0, 'yellow');
-        this.DrawPoint(200, 100, 'blue');
-        this.DrawPoint(50, 50, 'white');
-        this.DrawPoint(100, 100, 'white');
+        // this.DrawPoint(100, 200, 'green');
+        // this.DrawPoint(0, 0, 'yellow');
+        // this.DrawPoint(200, 100, 'blue');
+        // this.DrawPoint(50, 50, 'white');
+        // this.DrawPoint(100, 100, 'white');
+        // this.DrawPoint(100, 0, 'pink');
+        // this.DrawPoint(-100, 0, 'red');
+        // this.DrawPoint(-800, 0, 'red');
+        // this.DrawPoint(-900, 0, 'red');
         
+        this.DrawRuler();
 
+        for(let diagram of this.diagrams) {
+            diagram.Draw(this);
+        }
+    }
+
+    DrawRuler()
+    {
+        if(!this.layers.background) return;
+        const ctx = this.layers.background.ctx;
+        
+        const x = -this.scope.width/2 + 10;
+        const y = -this.scope.height/2 + 10;
+        const w = 100;
+        const h = this.scope.height - 20;
+        const r = 8;
+        ctx.fillStyle = 'rgba(44, 44, 54, 1)';
+        // ctx.beginPath();
+        // ctx.roundRect(x, y, w, h, Math.min(r, w/2, h/2));
+        ctx.fillRect(x, y, w, h);
+        // ctx.fill();
     }
 
     DrawBackground()
@@ -149,14 +211,27 @@ export class _MAIN
         // height/2 기준으로 피타고라스 정리로 알수 있자나
         // 100, 100 기준일 경우에 현재 중심점에서 -100 한걸로 더할값 구하자
         // -x좌표에서 시작해서 x를 100마다 그리는거지 width 넘길때까지
-        const wSize = 100;
-        const xStart = this.x % wSize;
-        if(xStart > 0) {xStart - wSize}
+        const step = 100;
+        const xStart = this.x % step;
+        if(xStart > 0) {xStart - step}
          
         ctx.save();
-        for(let i=xStart; i<=cav.width; i+=wSize) {
-            // console.log(i)
+        ctx.strokeStyle = rgba(44, 44, 64, 1);
+        // ctx.lineWidth = 4;
+        ctx.beginPath();
+        const wSize = this.SpaceX(cav.height/2);
+        const hSize = this.SpaceX(cav.height);
+
+        for(let i=xStart; i<=this.SpaceX(cav.width); i+=step) {
+            
+            const iPixel = this.PixelLine(i);
+            ctx.moveTo(iPixel-hSize+2500, -hSize+2500);
+            ctx.lineTo(iPixel+hSize-2500, hSize-2500);
+
+            // ctx.moveTo(-x1, y1);
+            // ctx.lineTo(-x2, y2);
         }
+        ctx.stroke();
         ctx.restore();
     }
 
@@ -168,11 +243,11 @@ export class _MAIN
         const y = this.PixelY(ySpace);
 
         ctx.save();
-        ctx.font = `${this.cssRoot.fontWeight} ${this.cssRoot.fontSize}px ${this.cssRoot.fontFamily}`;
+        ctx.font = `${_CSS.fontWeight} ${_CSS.fontSize}px ${_CSS.fontFamily}`;
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`( ${xSpace}, ${ySpace} )`, x, y+this.cssRoot.textHeight);
+        ctx.fillText(`( ${xSpace}, ${ySpace} )`, x, y+_CSS.textHeight);
         ctx.beginPath();
         ctx.arc(x, y, 4, Math.PI*2, false);
         ctx.fill();

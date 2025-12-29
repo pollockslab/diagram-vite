@@ -1,5 +1,4 @@
-// import './main.css'
-import { _IMPORT } from './imports.js'
+
 import { _MAIN as _PAGE_DIRECTORY } from './pages/directory/directory.js'
 import { _MAIN as _PAGE_FAVORITE } from './pages/favorite/favorite.js'
 import { _MAIN as _PAGE_MENU } from './pages/menu/menu.js'

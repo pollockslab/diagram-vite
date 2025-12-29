@@ -5,6 +5,6 @@ export class _MAIN
 {
     constructor(args={})
     {
-        console.log("menu 실행")
+        // console.log("menu 실행")
     }
 }
