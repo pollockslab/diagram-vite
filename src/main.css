@@ -14,6 +14,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  overscroll-behavior: none; /* 터치시 주소창, 상하 끝에서 튕기는 효과 제거 */
+}
 #app {
   position: absolute;
   left: 0px;
@@ -21,6 +24,7 @@
   width: 100vw;
   height: 100vh;
   margin: 0 auto;
+  touch-action: none;
 }
 
 #controller {

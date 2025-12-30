@@ -36,8 +36,6 @@ export class _MAIN
             this.PanEnd();
         });
 
-
-
         // Touch Event
         div.addEventListener('touchstart', (e) =>
         {
