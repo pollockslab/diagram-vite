@@ -41,34 +41,39 @@ export class _MAIN
         // Touch Event
         div.addEventListener('touchstart', (e) =>
         {
-            if (e.touches.length === 1) {
-                // === pan 시작 ===
+            // === pan 시작 ===
+            if (e.touches.length === 1 && this.touchMode !== 'pinch') {
                 const t = e.touches[0];
+                this.touchMode = 'pan';
                 this.PanStart(t.clientX, t.clientY);
             }
+
+            // === pinch 시작 ===
             if (e.touches.length === 2) {
-                // === pinch 시작 ===
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
 
                 const dx = t1.clientX - t2.clientX;
                 const dy = t1.clientY - t2.clientY;
 
+                this.touchMode = 'pinch';
                 this.pinch = {
                     dist: Math.hypot(dx, dy)
                 };
             }
-        }, {passive: false});
+        }, { passive: false });
+
         div.addEventListener('touchmove', (e) =>
         {
             // === pan ===
-            if (e.touches.length === 1) {
+            if (this.touchMode === 'pan' && e.touches.length === 1) {
                 const t = e.touches[0];
                 this.PanMove(t.clientX, t.clientY);
-                e.preventDefault(); // 스크롤 방지
+                e.preventDefault();
             }
+
             // === pinch zoom ===
-            if (e.touches.length === 2 && this.pinch) {
+            if (this.touchMode === 'pinch' && e.touches.length === 2 && this.pinch) {
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
 
@@ -76,27 +81,31 @@ export class _MAIN
                 const dy = t1.clientY - t2.clientY;
                 const dist = Math.hypot(dx, dy);
 
-                const delta = this.pinch.dist - dist; // wheel delta처럼 사용
+                const delta = this.pinch.dist - dist;
                 this.pinch.dist = dist;
 
-                // === wheel과 동일한 방식으로 처리 ===
+                // === wheel과 동일한 방식 ===
                 if (delta > 0) _VIEW.zoom += 0.05;
                 else if (delta < 0) _VIEW.zoom -= 0.05;
 
                 _VIEW.isDragging = true;
                 e.preventDefault();
             }
-        }, {passive: false});
+        }, { passive: false });
+
         div.addEventListener('touchend', (e) =>
         {
-            if (e.touches.length === 0) {
-                this.panEnd();
+            // === pinch 중 손가락 하나라도 떨어지면 종료 ===
+            if (this.touchMode === 'pinch' && e.touches.length < 2) {
+                this.touchMode = null;
                 this.pinch = null;
+                return;
             }
 
-            if (e.touches.length === 1) {
-                // pinch → pan 전환 대비
-                this.pinch = null;
+            // === pan 종료 ===
+            if (this.touchMode === 'pan' && e.touches.length === 0) {
+                this.touchMode = null;
+                this.panEnd();
             }
         });
     }
