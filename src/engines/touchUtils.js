@@ -1,8 +1,7 @@
 
-const _DPR = Math.round(window.devicePixelRatio) || 1;
 
 
-export const _CANVAS_UTILS = {
+export const _TOUCH_UTILS = {
    SetCanvasDPR
 } 
 
