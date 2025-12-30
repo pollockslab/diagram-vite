@@ -1,5 +1,8 @@
-import { _DIAGRAM, _ENGINE, _CSS, _CU, _TU } from '../../imports.js'
+import { _DIAGRAM, _ENGINE, _CSS, _CU } from '../../imports.js'
 import { _VIEW } from '../../main.js'
+
+const WHEEL_ZOOM_FACTOR = 0.001;
+const PINCH_ZOOM_FACTOR = 0.002;
 
 export class _MAIN
 {
@@ -12,14 +15,11 @@ export class _MAIN
         {
             e.preventDefault();
         });
-        div.addEventListener('wheel', async (e) =>
+        div.addEventListener('wheel', (e) =>
         {
-            if     (e.deltaY > 0) _VIEW.zoom += 0.1;
-            else if(e.deltaY < 0) _VIEW.zoom -= 0.1;
-            else return;
-
+            _VIEW.zoom -= e.deltaY * WHEEL_ZOOM_FACTOR;
             _VIEW.isDragging = true;
-        }, {passive: true});
+        }, { passive: true });
         div.addEventListener('mousedown', e => {
             this.PanStart(e.offsetX, e.offsetY);
         });
@@ -82,9 +82,7 @@ export class _MAIN
                 const delta = this.pinch.dist - dist;
                 this.pinch.dist = dist;
 
-                // === wheel과 동일한 방식 ===
-                if (delta > 0) _VIEW.zoom += 0.05;
-                else if (delta < 0) _VIEW.zoom -= 0.05;
+                _VIEW.zoom += delta * PINCH_ZOOM_FACTOR;
 
                 _VIEW.isDragging = true;
                 e.preventDefault();

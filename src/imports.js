@@ -5,9 +5,8 @@ import { _MAIN as _POINT } from './diagrams/point.js'
 
 // engines
 import { _MAIN as _ELEMENT } from './engines/element.js'
-import { _MAIN as _INDEXEDDB } from './engines/indexeddb.js'
+import { _MAIN as _INDEXEDDB } from './engines/indexedDB.js'
 import { _CANVAS_UTILS } from './engines/canvasUtils.js'
-import { _TOUCH_UTILS } from './engines/touchUtils.js'
 
 export const _DIAGRAM = {
     axis: _AXIS,
@@ -15,10 +14,9 @@ export const _DIAGRAM = {
 }
 export const _ENGINE = {
     element: _ELEMENT,
-    indexeddb: _INDEXEDDB,
+    indexedDB: _INDEXEDDB,
 }
 export const _CU = _CANVAS_UTILS;
-export const _TU = _TOUCH_UTILS;
 
 export const _CSS = (function()
 {

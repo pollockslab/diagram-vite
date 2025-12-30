@@ -1,13 +1,16 @@
-
+import { _ENGINE } from './imports.js'
 import { _MAIN as _PAGE_DIRECTORY } from './pages/directory/directory.js'
 import { _MAIN as _PAGE_FAVORITE } from './pages/favorite/favorite.js'
 import { _MAIN as _PAGE_MENU } from './pages/menu/menu.js'
 import { _MAIN as _PAGE_VIEW } from './pages/view/view.js'
 import { _MAIN as _PAGE_CONTROLLER } from './pages/view/controller.js'
+import { _MAIN as _STORAGE } from './storage/storage.js'
 
 
 const divApp = document.querySelector('#app');
 
+
+export const _STOR = new _STORAGE();
 
 export const _MENU = LoadPage(_PAGE_MENU, "menu");
 export const _FAVO = LoadPage(_PAGE_FAVORITE, "favorite");
