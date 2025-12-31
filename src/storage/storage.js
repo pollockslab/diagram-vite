@@ -1,20 +1,20 @@
 
-import { _SCHEMA } from './schema.js'
+// import { _SCHEMA } from './schema.js'
 
 export class _MAIN 
 {
     constructor(args={})
     {
-        // 'Live Server', 'Vite' 실행에 따라 다르게 워커생성
-        const port = window.location.port;
-        const workerPath = port === '5500'
-            ? '/src/storage/db.worker.js' // Live Server
-            : new URL('./db.worker.js', import.meta.url); // Vite chunck
+        // Vite 배포시 하나의 스크립트로 묶기위해 Blob 형태로 Worker 생성
+        const workerCode = `
+            self.onmessage = (e) => {
+                self.postMessage('Worker received: ' + e.data);
+            };
+        `;
 
-        
-        this.worker = new Worker(workerPath, { type: 'module' });
-        
-        
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        this.worker = new Worker(URL.createObjectURL(blob));
+
         this.worker.onmessage = async (e) => {
             console.log('storage onmessage', e.data);
         }
@@ -22,7 +22,7 @@ export class _MAIN
             console.log('storage err', e.message);
         }
         
-        this.worker.postMessage('storage send to db.worker');
+        this.worker.postMessage('storage ==> worker');
 
     }
 }
