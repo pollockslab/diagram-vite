@@ -5,15 +5,21 @@ export class _MAIN
 {
     constructor(args={})
     {
-        // Vite 배포시 하나의 스크립트로 묶기위해 Blob 형태로 Worker 생성
-        const workerCode = `
-            self.onmessage = (e) => {
-                self.postMessage('Worker received: ' + e.data);
-            };
-        `;
+        this.worker;
 
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        this.worker = new Worker(URL.createObjectURL(blob));
+        const isVite = typeof import.meta !== "undefined" && import.meta.env;
+        const isLiveServer = !isVite;
+
+        if (isLiveServer) {
+            // Live Server
+            this.worker = new Worker("./db.worker.js", { type: "module" });
+        } else {
+            // Vite dev + Vite build
+            this.worker = new Worker(
+                new URL("./db.worker.js", import.meta.url),
+                { type: "module" }
+            );
+        }
 
         this.worker.onmessage = async (e) => {
             console.log('storage onmessage', e.data);
