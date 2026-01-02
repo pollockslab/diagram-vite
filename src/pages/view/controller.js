@@ -1,5 +1,5 @@
 import { _DIAGRAM, _ENGINE, _CSS, _CU } from '../../imports.js'
-import { _VIEW } from '../../main.js'
+import { _VIEW, _STOR } from '../../main.js'
 
 const WHEEL_ZOOM_FACTOR = 0.001;
 const PINCH_ZOOM_FACTOR = 0.002;
@@ -33,7 +33,8 @@ export class _MAIN
         });
 
         div.addEventListener('mouseleave', () => {
-            this.PanEnd();
+            // this.PanEnd();
+            this.down = null;
         });
 
         // Touch Event
@@ -129,7 +130,11 @@ export class _MAIN
         _VIEW.isDragging = true;
     }
 
-    PanEnd() {
+    async PanEnd() {
         this.down = null;
+
+        // const sto_init = await _STOR.putNode({id:"node-1", kimchi:1, tomato:2});
+        // const node = await _STOR.getNode("node-1");
+        // console.log("클릭", node);
     }
 }

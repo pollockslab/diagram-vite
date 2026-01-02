@@ -25,6 +25,11 @@ export const _CTRL = LoadPage(_PAGE_CONTROLLER, "controller");
 // 2. 화면구성
 // 3. DB로드
 // 4. 화면에 작업물 입력
+const Init = async () => {
+    
+    
+};
+Init();
 
 
 /**
