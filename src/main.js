@@ -21,13 +21,10 @@ export const _CTRL = LoadPage(_PAGE_CONTROLLER, "controller");
 
 
 // [초기화]
-// 1. 엔진로드
-// 2. 화면구성
-// 3. DB로드
-// 4. 화면에 작업물 입력
 const Init = async () => {
-    
-    
+    await _STOR.Call('init');
+    const a1 = await _STOR.Call('loadSetting', {});
+    console.log(a1);
 };
 Init();
 

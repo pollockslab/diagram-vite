@@ -1,85 +1,38 @@
 import { _SCHEMA } from './schema.js';
+import * as transactions from '../tx/TRAN_LIST.js';
 
 let db = null;
 
 /* ---------------------------
-   Handlers (업무 / DB 명령)
+   message handler
 ---------------------------- */
-
-const handlers = 
-{
-    /* ---------- transaction ---------- */
-
-    
-
-    /* ---------- system ---------- */
-
-    async init() {
-        if (!db) db = await openDB();
-        return true;
-    },
-
-    /* ---------- CRUD ---------- */
-
-    async get({ table, key }) {
-        assertTable(table);
-        const store = getStore(table);
-        return await idbGet(store, key);
-    },
-
-    async put({ table, data }) {
-        assertTable(table);
-        const store = getStore(table, 'readwrite');
-        await idbPut(store, data);
-        return true;
-    },
-
-    async putList({ table, list }) {
-        assertTable(table);
-        const store = getStore(table, 'readwrite');
-
-        for (const item of list) {
-            await idbPut(store, item);
-        }
-
-        return true;
-    },
-
-    async del({ table, key }) {
-        assertTable(table);
-        const store = getStore(table, 'readwrite');
-        await idbDelete(store, key);
-        return true;
-    },
-
-    async delList({ table, list }) {
-        assertTable(table);
-        const store = getStore(table, 'readwrite');
-
-        for (const key of list) {
-            await idbDelete(store, key);
-        }
-
-        return true;
-    },
-
-    async clear({ table }) {
-        assertTable(table);
-        const store = getStore(table, 'readwrite');
-        store.clear();
-        return true;
-    },
-};
 
 self.onmessage = async (e) => {
     const { id, type, payload } = e.data;
 
     try {
-        if (!handlers[type]) {
-            throw new Error(`Unknown command: ${type}`);
+        /* ---------- system ---------- */
+
+        if (type === 'init') {
+            if (!db) db = await openDB();
+            self.postMessage({ id, ok: true });
+            return;
         }
 
-        const result = await handlers[type](payload);
+        if (!db) {
+            throw new Error('DB not initialized');
+        }
+
+        /* ---------- transaction ---------- */
+
+        const txFn = transactions[type];
+        if (!txFn) {
+            throw new Error(`Unknown transaction: ${type}`);
+        }
+        
+        const ctx = createCtx(db);
+        const result = await txFn(ctx, payload);
+
         self.postMessage({ id, ok: true, result });
     }
     catch (err) {
@@ -92,8 +45,75 @@ self.onmessage = async (e) => {
 };
 
 /* ---------------------------
+   Context
+---------------------------- */
+
+function createCtx(db) {
+    return {
+        /* ---------- read ---------- */
+
+        get(table, key) {
+            const store = getStore(db, table);
+            return req(store.get(key));
+        },
+
+        /* ---------- write ---------- */
+
+        put(table, value) {
+            const tx = db.transaction(table, 'readwrite');
+            const store = tx.objectStore(table);
+            store.put(value);
+
+            return txDone(tx);
+        },
+
+        putAll(table, list) {
+            const tx = db.transaction(table, 'readwrite');
+            const store = tx.objectStore(table);
+
+            for (const item of list) {
+                store.put(item);
+            }
+
+            return txDone(tx);
+        },
+
+        del(table, key) {
+            const tx = db.transaction(table, 'readwrite');
+            const store = tx.objectStore(table);
+            store.delete(key);
+
+            return txDone(tx);
+        },
+
+        delAll(table, keys) {
+            const tx = db.transaction(table, 'readwrite');
+            const store = tx.objectStore(table);
+
+            for (const key of keys) {
+                store.delete(key);
+            }
+
+            return txDone(tx);
+        },
+
+        clear(table) {
+            const tx = db.transaction(table, 'readwrite');
+            const store = tx.objectStore(table);
+            store.clear();
+
+            return txDone(tx);
+        },
+         
+        generateUUID
+    };
+}
+
+/* ---------------------------
    Helpers
 ---------------------------- */
+
+const TABLES = new Set(_SCHEMA.tables.map(t => t.name));
 
 function assertTable(table) {
     if (!TABLES.has(table)) {
@@ -101,9 +121,24 @@ function assertTable(table) {
     }
 }
 
-function getStore(table, mode = 'readonly') {
-    const tx = db.transaction(table, mode);
-    return tx.objectStore(table);
+function getStore(db, table, mode = 'readonly') {
+    assertTable(table);
+    return db.transaction(table, mode).objectStore(table);
+}
+
+function req(request) {
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+function txDone(tx) {
+    return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    });
 }
 
 /* ---------------------------
@@ -112,7 +147,6 @@ function getStore(table, mode = 'readonly') {
 
 function openDB() {
     return new Promise((resolve, reject) => {
-        
         const request = indexedDB.open('diagramDB', _SCHEMA.version);
 
         request.onupgradeneeded = (event) => {
@@ -150,31 +184,34 @@ function openDB() {
     });
 }
 
-/* ---------------------------
-   IndexedDB helper functions
----------------------------- */
+export function generateUUID() 
+{
+  // 1. 최신 환경 (가장 빠르고 안전)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
 
-function idbGet(store, key) {
-    return new Promise((resolve, reject) => {
-        const req = store.get(key);
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+  // 2. fallback: RFC 4122 v4
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const buf = new Uint8Array(16);
+    crypto.getRandomValues(buf);
+
+    // version (4)
+    buf[6] = (buf[6] & 0x0f) | 0x40;
+    // variant (RFC 4122)
+    buf[8] = (buf[8] & 0x3f) | 0x80;
+
+    let i = 0;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const v = buf[i++] & 0x0f;
+      return (c === 'x' ? v : (v & 0x3) | 0x8).toString(16);
     });
-}
+  }
 
-function idbPut(store, value) {
-    return new Promise((resolve, reject) => {
-        const req = store.put(value);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-    });
+  // 3. 최후의 보루 (거의 안 타지만)
+  return (
+    Date.now().toString(36) +
+    '-' +
+    Math.random().toString(36).slice(2, 10)
+  );
 }
-
-function idbDelete(store, key) {
-    return new Promise((resolve, reject) => {
-        const req = store.delete(key);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-    });
-}
-

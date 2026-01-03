@@ -1,8 +1,8 @@
 
 export const _SCHEMA = 
 {
-    version: 2,
-    work_date: '2025-12-31 00:33',
+    version: 1,
+    work_date: '2026-01-03 07:35',
     tables: [
         {
             name: 'version_history',
@@ -13,8 +13,7 @@ export const _SCHEMA =
                 autoIncrement: true
             },
             index: [
-                {key:'byVersion', column:'version', options:{unique:false}},
-                // {key:'byTime', column:'timestamp', options:{unique:false}},
+                // {key:'byVersion', column:'version', options:{unique:false}},
             ]
         },
         {   
@@ -32,7 +31,7 @@ export const _SCHEMA =
         {
             name: 'setting',
             desc: '설정',
-            column: ["id", "tab"],
+            column: ["id", "openTabID"],
             options: {
                 keyPath: 'id',
                 autoIncrement: true
@@ -42,17 +41,7 @@ export const _SCHEMA =
         {
             name: 'tab',
             desc: '새 창 열기. json 내보내기 단위',
-            column: ["id", "space", "favorites", "timestamp"],
-            options: {
-                keyPath: 'id',
-                autoIncrement: false
-            },
-            index: []
-        },
-        {
-            name: 'space',
-            desc: '도형, 라인들을 품은 공간. 상자 하나당 가지고 있는 공간',
-            column: ["id", "info", "directory", "timestamp"],
+            column: ["id", "openDiagramID", "favorites", "timestamp"],
             options: {
                 keyPath: 'id',
                 autoIncrement: false
@@ -62,7 +51,8 @@ export const _SCHEMA =
         {
             name: 'diagram',
             desc: '도형(클래스, 함수, 메모), 라인(기본선, 점선등)',
-            column: ["id", "info", "parent", "timestamp"],
+            desc2: 'ui내용: 기본 x,y,w,h 그리고 각자 텍스트등, 라인은 연결 다이어그램등',
+            column: ["id", "ui", "children", "parent", "timestamp"],
             options: {
                 keyPath: 'id',
                 autoIncrement: false

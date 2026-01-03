@@ -8,13 +8,13 @@ export class _MAIN {
 
         const isVite = typeof import.meta !== "undefined" && import.meta.env;
         const isLiveServer = !isVite;
-
+        
         this.worker = isLiveServer
             ? new Worker("./src/storage/db.worker.js", { type: "module" })
             : new Worker(new URL("./db.worker.js", import.meta.url), { type: "module" });
 
         // 초기화 메시지
-        this.Call('init');
+        // this.Call('init');
         
         
         /* ------------------------
@@ -23,7 +23,7 @@ export class _MAIN {
 
         this.worker.onmessage = (e) => {
             const { id, ok, result, error } = e.data;
-
+            
             const pending = this.pending.get(id);
             if (!pending) return;
 
@@ -36,12 +36,12 @@ export class _MAIN {
 
                 console.warn(e.data);
 
-                const errMsg = _DB_ERR_MSG(error?.name ?? error);
-                alert(
-                    `오류: ${errMsg.title}\n` +
-                    `코드: ${errMsg.code}\n` +
-                    `설명: ${errMsg.message}`
-                );
+                // const errMsg = _DB_ERR_MSG(error?.name ?? error);
+                // alert(
+                //     `오류: ${errMsg.title}\n` +
+                //     `코드: ${errMsg.code}\n` +
+                //     `설명: ${errMsg.message}`
+                // );
             }
         };
 
