@@ -1,18 +1,18 @@
 import { _DIAGRAM, _ENGINE, _CSS, _CU } from '../../imports.js'
-import { _CTRL } from '../../main.js'
+import { _CTRL, _STOR } from '../../main.js'
 // import './view.css'
 
 /**
  * 도형 그리는 화면
  */
-export class _MAIN
+export class _MAIN extends _DIAGRAM.axis
 {
     constructor(args={})
     {
-        this.x = 0;
-        this.y = 0;
+        super(args);
+        
         this.scope = {
-            dpr: 1, min: 1, max: 6, zoom: 2,
+            dpr: 1, min: 1, max: 6, zoom: 1,
             width: 0, height: 0
         };
 
@@ -24,7 +24,7 @@ export class _MAIN
         this.Resize();
 
         this.diagrams = [];
-        this.LoadDiagrams();
+        // this.LoadDiagrams();
 
         this.Loop();
 
@@ -57,10 +57,11 @@ export class _MAIN
             this.isLogUpdate = false;
         }
 
-        if(this.isDragging || this.isResizing) {
+        if(this.isDragging || this.isResizing || this.isLoading) {
             this.Draw();
             this.isDragging = false;
             this.isResizing = false;
+            this.isLoading  = false;
         }
         requestAnimationFrame(this.Loop);
     }
@@ -76,19 +77,40 @@ export class _MAIN
         }
     }
 
-    LoadDiagrams()
+    async LoadDiagrams(tabID)
     {
-        this.diagrams = [];
-        const p1 = new _DIAGRAM.point({
-            x:100, y:100, 
-            ctxDraw:this.layers.background.ctx,
-        });
-        this.diagrams.push(p1);
+        this.tabID = tabID;
+        this.InitChildren();
+        
+        const loadTab = await _STOR.Call('loadTab', {tabID: tabID});
+        if(!loadTab) return;
+        const diagrams = loadTab.diagrams;
+        if(!diagrams) return;
+        this.id = loadTab.tab.openDiagramID;
+        
+        for(const dInfo of diagrams) {
+            
+            if(!dInfo.ui || !_DIAGRAM[dInfo.ui.type]) continue;
 
-        this.diagrams.push(new _DIAGRAM.point({
-            x:0, y:0, color: 'red', 
-            ctxDraw:this.layers.background.ctx,
-        }));
+            const item = new _DIAGRAM[dInfo.ui.type]({
+                // x:0, y:0, color: 'white', 
+            });
+            item.SetData(dInfo);
+            item.Render();
+
+            this.AddChild(item);
+        }
+        // console.log(this.children)
+        // 중심점 생성
+        // const p1 = new _DIAGRAM.point({
+        //     x:-100, y:-100, color: 'red',
+        // });
+        // await p1.Save({parentID: this.id, tabID: this.tabID});
+
+        // this.AddChild(p1);
+        // console.log(p1);
+
+        this.isLoading = true;
     }
 
     InitLayers(parentNode)
@@ -161,27 +183,19 @@ export class _MAIN
         });
 
 
-        // this.DrawBackground();
+        this.DrawBackground();
         
         this.DrawLine(100, 200, 200, 100, 'orange');
         this.DrawLine(0, 0, 200, 100, 'orange');
         this.DrawLine(0, 0, 100, 200, 'orange');
 
-        // this.DrawPoint(100, 200, 'green');
-        // this.DrawPoint(0, 0, 'yellow');
-        // this.DrawPoint(200, 100, 'blue');
-        // this.DrawPoint(50, 50, 'white');
-        // this.DrawPoint(100, 100, 'white');
-        // this.DrawPoint(100, 0, 'pink');
-        // this.DrawPoint(-100, 0, 'red');
-        // this.DrawPoint(-800, 0, 'red');
-        // this.DrawPoint(-900, 0, 'red');
-        
-        this.DrawRuler();
-
-        for(let diagram of this.diagrams) {
-            diagram.Draw(this);
-        }
+        ['none', 'point'].forEach((value) => 
+        {
+            const list = this.children[value];
+            for(const item of list) {
+                item.Draw(this, this.layers.board.ctx);
+            }
+        });
     }
 
     DrawRuler()
@@ -207,29 +221,30 @@ export class _MAIN
         const ctx = this.layers.background.ctx;
         const cav = this.layers.background.cav;
 
-        // xxxxx 모양으로 그린다
-        // height/2 기준으로 피타고라스 정리로 알수 있자나
-        // 100, 100 기준일 경우에 현재 중심점에서 -100 한걸로 더할값 구하자
-        // -x좌표에서 시작해서 x를 100마다 그리는거지 width 넘길때까지
-        const step = 100;
-        const xStart = this.x % step;
-        if(xStart > 0) {xStart - step}
+        const xStep = 100;
+        const xStart = -this.x % xStep;
+        if(xStart > 0) {xStart - xStep}
+
+        const yStep = 200;
+        const yStart = -this.y % yStep;
+        if(yStart > 0) {yStart - yStep}
          
         ctx.save();
-        ctx.strokeStyle = rgba(44, 44, 64, 1);
+        ctx.strokeStyle = 'rgba(64, 64, 64, 1)';
         // ctx.lineWidth = 4;
         ctx.beginPath();
-        const wSize = this.SpaceX(cav.height/2);
-        const hSize = this.SpaceX(cav.height);
+        // const w = this.scope.width/2;
+        const h = this.scope.height;
 
-        for(let i=xStart; i<=this.SpaceX(cav.width); i+=step) {
+        for(let i=xStart-this.scope.width; i<=this.scope.width; i+=xStep) {
             
             const iPixel = this.PixelLine(i);
-            ctx.moveTo(iPixel-hSize+2500, -hSize+2500);
-            ctx.lineTo(iPixel+hSize-2500, hSize-2500);
+            // console.log(iPixel, h);
+            ctx.moveTo(iPixel -h, yStart-h);
+            ctx.lineTo(iPixel +h, yStart+h);
 
-            // ctx.moveTo(-x1, y1);
-            // ctx.lineTo(-x2, y2);
+            ctx.moveTo(iPixel -h, yStart+h);
+            ctx.lineTo(iPixel +h, yStart-h);
         }
         ctx.stroke();
         ctx.restore();

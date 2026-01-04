@@ -19,12 +19,14 @@ export const _DIRC = LoadPage(_PAGE_DIRECTORY, "directory");
 export const _VIEW = LoadPage(_PAGE_VIEW, "view");
 export const _CTRL = LoadPage(_PAGE_CONTROLLER, "controller");
 
+export let _TAB_ID = null;
 
 // [초기화]
 const Init = async () => {
     await _STOR.Call('init');
-    const a1 = await _STOR.Call('loadSetting', {});
-    console.log(a1);
+    const setting = await _STOR.Call('loadSetting', {});
+   
+    await _VIEW.LoadDiagrams(setting.openTabID);
 };
 Init();
 

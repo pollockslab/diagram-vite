@@ -1,8 +1,10 @@
 
-export default async function saveDiagram(ctx, { nodes }) 
+export default async function saveDiagram(ctx, { id, ui, parentID, tabID }) 
 {
-    await ctx.delAll('nodes', nodes.map(n => n.id));
-    await ctx.putAll('nodes', nodes);
+    // id 없으면 uuid 추가
+    if(!id) id = ctx.generateUUID();
+    
+    await ctx.put('diagram', {id, ui, parentID, tabID});
 
-    return true;
+    return id;
 }

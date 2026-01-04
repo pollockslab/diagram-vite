@@ -1,11 +1,12 @@
 import { _MAIN as _AXIS } from './axis.js'
 import { _CSS, _CU } from '../imports.js'
+import { _STOR } from '../main.js'
 
 export class _MAIN extends _AXIS
 {
     constructor(args={})
     {
-        super();
+        super(args);
         this.type = "point";
         this.x = args.x ?? 0;
         this.y = args.y ?? 0;
@@ -14,11 +15,6 @@ export class _MAIN extends _AXIS
         this.cx = 151;
         this.cy = 151;
         this.color = args.color ?? 'white';
-
-        // draw 초기화
-        this._draw = {
-            ctx: args.ctxDraw ?? null
-        };
 
         // css 초기화
         const cav = this._capture.cav;
@@ -29,6 +25,41 @@ export class _MAIN extends _AXIS
         ctx.fillStyle = this.color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+
+        // this.Render();
+    }
+
+    get ui()
+    {
+        const temp = {
+            type: 'point',
+            x: this.x, 
+            y: this.y,
+            color: this.color,
+        };
+        return temp;
+    }
+    set ui(data) 
+    {
+        const keys = ['type', 'x', 'y', 'color'];
+        for (const key of keys) {
+            if (data[key] !== undefined) {
+                this[key] = data[key];
+            }
+        }
+    }
+
+    async Save(args)
+    {
+        // id 없으면 최종적으로 생성되는데.
+        this.SetData(args);
+        
+        this.id = await _STOR.Call('saveDiagram', {
+            id: this.id, ui: this.ui, 
+            parentID: this.parentID, tabID: this.tabID,
+            timestamp: Date.now()
+        });
+        // console.log('id', this.id);
 
         this.Render();
     }
@@ -46,16 +77,16 @@ export class _MAIN extends _AXIS
         ctx.fill();
     }
 
-    Draw(parent)
+    Draw(parent, ctx)
     {
-        if(this._draw.ctx == null) return;
+        if(ctx == null) return;
         
         const x = parent.PixelX(this.x)-this.cx;
         const y = parent.PixelY(this.y)-this.cy;
         const w = this.w;
         const h = this.h;
 
-        this._draw.ctx.drawImage(
+        ctx.drawImage(
             this._capture.cav, 
             0, 0, this._capture.cav.width, this._capture.cav.height,
             x, y, w, h);

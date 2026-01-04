@@ -28,8 +28,8 @@ export class _MAIN
             this.PanMove(e.offsetX, e.offsetY);
         });
 
-        div.addEventListener('mouseup', () => {
-            this.PanEnd();
+        div.addEventListener('mouseup', e => {
+            this.PanEnd(e.offsetX, e.offsetY);
         });
 
         div.addEventListener('mouseleave', () => {
@@ -90,8 +90,7 @@ export class _MAIN
             }
         }, { passive: false });
 
-        div.addEventListener('touchend', (e) =>
-        {
+        div.addEventListener('touchend', (e) => {
             // === pinch 중 손가락 하나라도 떨어지면 종료 ===
             if (this.touchMode === 'pinch' && e.touches.length < 2) {
                 this.touchMode = null;
@@ -101,10 +100,17 @@ export class _MAIN
 
             // === pan 종료 ===
             if (this.touchMode === 'pan' && e.touches.length === 0) {
+                const touch = e.changedTouches[0];
+                const rect = div.getBoundingClientRect();
+
+                const offsetX = touch.clientX - rect.left;
+                const offsetY = touch.clientY - rect.top;
+
                 this.touchMode = null;
-                this.panEnd();
+                this.panEnd(offsetX, offsetY);
             }
         });
+
     }
 
     PanStart(screenX, screenY) {
@@ -130,11 +136,16 @@ export class _MAIN
         _VIEW.isDragging = true;
     }
 
-    async PanEnd() {
-        this.down = null;
-
-        // const sto_init = await _STOR.putNode({id:"node-1", kimchi:1, tomato:2});
-        // const node = await _STOR.getNode("node-1");
-        // console.log("클릭", node);
+    async PanEnd(screenX, screenY) {
+        this.down = null;   
+        
+        const p1 = new _DIAGRAM.point({
+            x:_VIEW.SpaceX(screenX), 
+            y:_VIEW.SpaceY(screenY), 
+            color: 'red',
+        });
+        await p1.Save({parentID: _VIEW.id, tabID: _VIEW.tabID});
+        _VIEW.AddChild(p1);
+        _VIEW.Draw();
     }
 }

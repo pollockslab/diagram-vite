@@ -1,8 +1,8 @@
 
 export const _SCHEMA = 
 {
-    version: 1,
-    work_date: '2026-01-03 07:35',
+    version: 2,
+    work_date: '2026-01-04 05:35',
     tables: [
         {
             name: 'version_history',
@@ -52,12 +52,14 @@ export const _SCHEMA =
             name: 'diagram',
             desc: '도형(클래스, 함수, 메모), 라인(기본선, 점선등)',
             desc2: 'ui내용: 기본 x,y,w,h 그리고 각자 텍스트등, 라인은 연결 다이어그램등',
-            column: ["id", "ui", "children", "parent", "timestamp"],
+            column: ["id", "ui", "parentID", "tabID", "timestamp"],
             options: {
                 keyPath: 'id',
                 autoIncrement: false
             },
-            index: []
+            index: [
+                {key:'byParentID', column:'parentID', options:{unique:false}},
+            ]
         },
     ]
 }

@@ -57,6 +57,14 @@ function createCtx(db) {
             return req(store.get(key));
         },
 
+        getByIndex(table, indexName, key) {
+            const tx = db.transaction(table, 'readonly');
+            const store = tx.objectStore(table);
+            const index = store.index(indexName);
+
+            return req(index.getAll(key));
+        },
+
         /* ---------- write ---------- */
 
         put(table, value) {
