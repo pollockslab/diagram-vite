@@ -139,13 +139,13 @@ export class _MAIN
     async PanEnd(screenX, screenY) {
         this.down = null;   
         
-        const p1 = new _DIAGRAM.point({
-            x:_VIEW.SpaceX(screenX), 
-            y:_VIEW.SpaceY(screenY), 
-            color: 'red',
-        });
-        await p1.Save({parentID: _VIEW.id, tabID: _VIEW.tabID});
-        _VIEW.AddChild(p1);
-        _VIEW.Draw();
+        // const p1 = new _DIAGRAM.point({
+        //     x:_VIEW.SpaceX(screenX), 
+        //     y:_VIEW.SpaceY(screenY), 
+        //     color: 'red',
+        // });
+        // await p1.Save({parentID: _VIEW.id, tabID: _VIEW.tabID});
+        // _VIEW.AddChild(p1);
+        // _VIEW.Draw();
     }
 }

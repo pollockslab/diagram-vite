@@ -7,6 +7,7 @@ import { _MAIN as _POINT } from './diagrams/point.js'
 import { _MAIN as _ELEMENT } from './engines/element.js'
 import { _MAIN as _INDEXEDDB } from './engines/indexedDB.js'
 import { _CANVAS_UTILS } from './engines/canvasUtils.js'
+import { _MAIN as _MATH } from './engines/math.js'
 
 export const _DIAGRAM = {
     axis: _AXIS,
@@ -15,6 +16,7 @@ export const _DIAGRAM = {
 export const _ENGINE = {
     element: _ELEMENT,
     indexedDB: _INDEXEDDB,
+    math: _MATH,
 }
 export const _CU = _CANVAS_UTILS;
 
